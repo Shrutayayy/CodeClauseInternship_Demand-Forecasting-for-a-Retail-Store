@@ -1,0 +1,102 @@
+import pandas as pd
+
+# Load the data
+data = pd.read_csv('sales_data.csv', parse_dates=['date'], index_col='date')
+
+# Handle missing values
+data = data.fillna(method='ffill')
+
+# Check the data
+print(data.head())
+import matplotlib.pyplot as plt
+
+# Plot the time series
+plt.figure(figsize=(12, 6))
+plt.plot(data['sales'], label='Sales')
+plt.title('Sales Over Time')
+plt.xlabel('Date')
+plt.ylabel('Sales')
+plt.legend()
+plt.show()
+from statsmodels.tsa.seasonal import seasonal_decompose
+
+# Decompose the time series
+decomposition = seasonal_decompose(data['sales'], model='additive')
+decomposition.plot()
+plt.show()
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+
+# Define the SARIMA model
+model = SARIMAX(data['sales'], order=(1, 1, 1), seasonal_order=(1, 1, 1, 12))
+model_fit = model.fit()
+
+# Summary of the model
+print(model_fit.summary())
+# Split the data into train and test sets
+train = data['sales'][:-12]
+test = data['sales'][-12:]
+
+# Train the SARIMA model on the training data
+model = SARIMAX(train, order=(1, 1, 1), seasonal_order=(1, 1, 1, 12))
+model_fit = model.fit()
+
+# Forecast the sales for the test period
+forecast = model_fit.forecast(steps=12)
+plt.figure(figsize=(12, 6))
+plt.plot(train, label='Train')
+plt.plot(test, label='Test')
+plt.plot(forecast, label='Forecast')
+plt.title('Sales Forecast vs Actual Sales')
+plt.xlabel('Date')
+plt.ylabel('Sales')
+plt.legend()
+plt.show()
+# Forecast future demand for the next 24 periods
+future_forecast = model_fit.forecast(steps=24)
+
+# Plot the forecasted sales
+plt.figure(figsize=(12, 6))
+plt.plot(data['sales'], label='Historical Sales')
+plt.plot(future_forecast, label='Future Forecast')
+plt.title('Future Sales Forecast')
+plt.xlabel('Date')
+plt.ylabel('Sales')
+plt.legend()
+plt.show()
+import pandas as pd
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+import matplotlib.pyplot as plt
+
+# Load and preprocess the data
+def load_data(file_path):
+    data = pd.read_csv(file_path, parse_dates=['date'], index_col='date')
+    data = data.fillna(method='ffill')
+    return data
+
+# Train and forecast
+def train_and_forecast(data, steps=24):
+    model = SARIMAX(data['sales'], order=(1, 1, 1), seasonal_order=(1, 1, 1, 12))
+    model_fit = model.fit()
+    forecast = model_fit.forecast(steps=steps)
+    return model_fit, forecast
+
+# Plot forecast
+def plot_forecast(data, forecast):
+    plt.figure(figsize=(12, 6))
+    plt.plot(data['sales'], label='Historical Sales')
+    plt.plot(forecast, label='Future Forecast')
+    plt.title('Sales Forecast')
+    plt.xlabel('Date')
+    plt.ylabel('Sales')
+    plt.legend()
+    plt.show()
+
+# Main function
+def main():
+    file_path = 'sales_data.csv'
+    data = load_data(file_path)
+    model_fit, future_forecast = train_and_forecast(data)
+    plot_forecast(data, future_forecast)
+
+if __name__ == "__main__":
+    main()
